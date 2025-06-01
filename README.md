@@ -4,11 +4,11 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 -- Cria a janela
 local Window = Fluent:CreateWindow({
     Title = "🔥 Arthur-Menu City(ACESSO ANTECIPADO) 🔥",
-    SubTitle = "by Bernardo",
+    SubTitle = "by Bernardo e Arthur",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = true,
-    Theme = "Darker",
+    Theme = "Amethyst",
     MinimizeKey = Enum.KeyCode.K
 })
 
@@ -251,7 +251,6 @@ CombatTab:AddToggle("HitboxToggle", {
                 end
             end
         end
-        print(hitboxEnabled and "Hitbox ativada!" or "Hitbox desativada!")
     end
 })
 
@@ -1132,8 +1131,8 @@ local Tabs = {
 
 -- Seção NECESSÁRIO
 Tabs.Main:AddParagraph({
-    Title = "Grand-Menu revist",
-    Content = "Feito por Polengo 👨‍💻"
+    Title = "Arthur ,menu e polengo revist",
+    Content = "Feito por Polengo e arthur 👨‍💻"
 })
 
 Tabs.Main:AddSection("NECESSÁRIO")
@@ -2100,7 +2099,7 @@ local noClipEnabled = false -- Estado do no-clip
 
 -- Função de assinatura
 local function signature()
-    print("By Berninhas")
+
 end
 
 -- Função auxiliar para gerenciar cooldown
@@ -2218,7 +2217,7 @@ local VehicleButton = VehicleTab:AddButton({
                 end
             end)
             if success then
-                print("Carro destrancado com sucesso!")
+               
                 flashButton(VehicleButton, "Veículo destrancado ✅", 2)
             else
                 warn("Erro ao destrancar carro: " .. tostring(err))
@@ -2397,11 +2396,7 @@ LocalPlayer.CharacterAdded:Connect(function(newCharacter)
     end
 end)
 
--- Debug: Verificar criação dos botões
-print("Botão 'Destrancar Veiculo 🚗' criado na aba 'Veiculos'.")
-print("Botão 'Bug Car 🛞' criado na aba 'Veiculos'.")
-print("Botão 'Bug Car 2 🛞' criado na aba 'Veiculos'.")
-print("Botão 'No-Clip 🚶' criado na aba 'Veiculos'.")
+
 
 -- Aba de Teleportes
 local TeleportTab = Window:AddTab({
@@ -2582,8 +2577,7 @@ TeleportTab:AddButton({
     end
 })
 
--- Debug: Confirmar criação da aba
-print("Aba 'Teleports 🌀' criada com sucesso usando Fluent!")
+
 
 -- Exibe a janela
 Window:SelectTab(1)
@@ -2701,8 +2695,6 @@ TeleportTab:AddButton({
     end
 })
 
--- Debug
-print("Aba 'Teleports 🌀' para jogadores criada com sucesso!")
 
 -- Exibe a janela
 Window:SelectTab(1)
@@ -3285,9 +3277,9 @@ end)
 UIS.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.LeftShift then
         Settings.Speed = 3
-    elseif input.KeyCode == Enum.KeyCode.F then
+    elseif input.KeyCode == Enum.KeyCode.j then
         ToggleFly()
-    elseif input.KeyCode == Enum.KeyCode.G then
+    elseif input.KeyCode == Enum.KeyCode.b then
         ToggleNoFallButton()
     elseif input.KeyCode == Enum.KeyCode.V then
         ToggleFly() -- Tecla V agora também ativa/desativa o fly
@@ -3323,16 +3315,7 @@ end)
 
 toggleNoFall()
 
--- ✅ Prints de status
-print("✈️ Fly + No Fall carregado com sucesso!")
-print("📋 Controles:")
-print("   F - Toggle Fly")
-print("   V - Toggle Fly") -- Adicionado o V
-print("   G - Toggle No Fall")
-print("   WASD - Movimento")
-print("   Space - Subir")
-print("   Ctrl - Descer")
-print("   Shift - Velocidade extra")
+
 
 MainTab:AddParagraph({
     Title = "Nossos fly",
