@@ -8,7 +8,7 @@ local Window = Fluent:CreateWindow({
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = true,
-    Theme = "Light",
+    Theme = "Darker",
     MinimizeKey = Enum.KeyCode.K
 })
 
@@ -585,6 +585,77 @@ notificar("Menu Carregado", "GRAND-SHOP Menu Mini City carregado com sucesso!", 
 
 -- Criar nova aba para Aimbot
 local AimbotTab = Window:AddTab({ Title = "Aimbot 🎯", Icon = "target" })
+
+-- 🔥 Variáveis principais
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+
+-- 🧠 Configuração
+local Settings = {
+    Aimbot = true,
+    FOV = 100
+}
+
+-- 🟢 Toggle no Fluent UI
+local AimbotToggle = AimbotTab:AddToggle("AimbotToggle", {
+    Title = "Ativar Aimbot mobile",
+    Description = "Ativa ou desativa o Aimbot com FOV",
+    Default = true
+})
+
+-- 🔵 Desenho do FOV Circle
+local FOV = Drawing.new("Circle")
+FOV.Color = Color3.fromRGB(0, 255, 0)
+FOV.Thickness = 1
+FOV.Transparency = 0.5
+FOV.Filled = false
+FOV.NumSides = 100
+FOV.Radius = Settings.FOV
+FOV.Visible = true
+
+-- 🎯 Função para pegar o player mais próximo do centro da tela (dentro do FOV)
+function GetClosestPlayer()
+    local closestPlayer = nil
+    local shortestDistance = Settings.FOV
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local pos, onScreen = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+            if onScreen then
+                local distance = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+                if distance < shortestDistance then
+                    shortestDistance = distance
+                    closestPlayer = player
+                end
+            end
+        end
+    end
+
+    return closestPlayer
+end
+
+-- 🔗 Conexão do botão com o Aimbot
+AimbotToggle:OnChanged(function(state)
+    Settings.Aimbot = state
+    FOV.Visible = state
+end)
+
+-- 🔁 Loop do Aimbot
+RunService.RenderStepped:Connect(function()
+    -- Atualiza a posição do círculo FOV no centro da tela
+    FOV.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    FOV.Radius = Settings.FOV
+
+    -- Executa o aimbot se estiver ativado
+    if Settings.Aimbot then
+        local target = GetClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.HumanoidRootPart.Position)
+        end
+    end
+end)
 
 -- Variáveis de controle
 local aimbotEnabled = false
@@ -3016,6 +3087,257 @@ game.Players.LocalPlayer.CharacterRemoving:Connect(function()
         stopFlying()
     end
 end)
+
+local ShowFlyUI = MainTab:AddToggle("ShowFlyUI", {
+    Title = "Abrir Interface de Voo 2",
+    Description = "Abre/fecha a interface de controle do voo",
+    Default = false
+})
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+
+local Settings = {
+    Fly = false,
+    Speed = 2,
+    NoFall = false
+}
+
+local flySpeed = 50
+local descendantConnection = nil
+
+-- 📛 Função para deletar eventos de dano, queda e similares
+local function deleteDamageEvents()
+    for _, obj in ipairs(game:GetDescendants()) do
+        if obj:IsA("RemoteEvent") or obj:IsA("BindableEvent") then
+            local name = string.lower(obj.Name)
+            if name:find("damage") or name:find("dano") or name:find("fall") or name:find("hurt") then
+                obj:Destroy()
+            end
+        end
+    end
+end
+
+-- 🛡️ Função para ativar/desativar No Fall
+local function toggleNoFall()
+    Settings.NoFall = not Settings.NoFall
+    if Settings.NoFall then
+        print("✅ No Fall Ativado!")
+        deleteDamageEvents()
+        descendantConnection = game.DescendantAdded:Connect(function(obj)
+            if obj:IsA("RemoteEvent") or obj:IsA("BindableEvent") then
+                local name = string.lower(obj.Name)
+                if name:find("damage") or name:find("dano") or name:find("fall") or name:find("hurt") then
+                    obj:Destroy()
+                end
+            end
+        end)
+    else
+        print("❌ No Fall Desativado!")
+        if descendantConnection then
+            descendantConnection:Disconnect()
+            descendantConnection = nil
+        end
+    end
+end
+
+-- 🖥️ Criação da interface Fly GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FlyGui"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.Enabled = false -- Começa fechado
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Parent = ScreenGui
+MainFrame.Size = UDim2.new(0, 180, 0, 140)
+MainFrame.Position = UDim2.new(0, 20, 0, 100)
+MainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+MainFrame.BorderSizePixel = 0
+
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0, 8)
+Corner.Parent = MainFrame
+
+-- Botão Fly
+local FlyButton = Instance.new("TextButton")
+FlyButton.Parent = MainFrame
+FlyButton.Size = UDim2.new(0.9, 0, 0, 35)
+FlyButton.Position = UDim2.new(0.05, 0, 0, 10)
+FlyButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+FlyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyButton.TextScaled = true
+FlyButton.Font = Enum.Font.SourceSansBold
+FlyButton.Text = "Ativar Fly ✈️"
+
+local FlyCorner = Instance.new("UICorner", FlyButton)
+FlyCorner.CornerRadius = UDim.new(0, 4)
+
+-- Botão No Fall
+local NoFallButton = Instance.new("TextButton")
+NoFallButton.Parent = MainFrame
+NoFallButton.Size = UDim2.new(0.9, 0, 0, 25)
+NoFallButton.Position = UDim2.new(0.05, 0, 0, 50)
+NoFallButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+NoFallButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+NoFallButton.TextScaled = true
+NoFallButton.Font = Enum.Font.SourceSans
+NoFallButton.Text = "Ativar No Fall 🛡️"
+
+local NoFallCorner = Instance.new("UICorner", NoFallButton)
+NoFallCorner.CornerRadius = UDim.new(0, 4)
+
+-- Label da Velocidade
+local SpeedLabel = Instance.new("TextLabel")
+SpeedLabel.Parent = MainFrame
+SpeedLabel.Size = UDim2.new(0.9, 0, 0, 20)
+SpeedLabel.Position = UDim2.new(0.05, 0, 0, 80)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Text = "Velocidade: " .. flySpeed
+SpeedLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+SpeedLabel.TextScaled = true
+SpeedLabel.Font = Enum.Font.SourceSans
+
+-- Botões de velocidade
+local SpeedDownButton = Instance.new("TextButton")
+SpeedDownButton.Parent = MainFrame
+SpeedDownButton.Size = UDim2.new(0.25, 0, 0, 25)
+SpeedDownButton.Position = UDim2.new(0.05, 0, 0, 105)
+SpeedDownButton.BackgroundColor3 = Color3.fromRGB(80, 40, 40)
+SpeedDownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedDownButton.TextScaled = true
+SpeedDownButton.Font = Enum.Font.SourceSansBold
+SpeedDownButton.Text = "- 10"
+
+local SpeedUpButton = Instance.new("TextButton")
+SpeedUpButton.Parent = MainFrame
+SpeedUpButton.Size = UDim2.new(0.25, 0, 0, 25)
+SpeedUpButton.Position = UDim2.new(0.7, 0, 0, 105)
+SpeedUpButton.BackgroundColor3 = Color3.fromRGB(40, 80, 40)
+SpeedUpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedUpButton.TextScaled = true
+SpeedUpButton.Font = Enum.Font.SourceSansBold
+SpeedUpButton.Text = "+ 10"
+
+for _, button in pairs({SpeedDownButton, SpeedUpButton}) do
+    local corner = Instance.new("UICorner", button)
+    corner.CornerRadius = UDim.new(0, 3)
+end
+
+-- 🔥 Funções
+local function SetNoClip(state)
+    if LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = not state
+            end
+        end
+    end
+end
+
+local function ToggleFly()
+    Settings.Fly = not Settings.Fly
+    if Settings.Fly then
+        LocalPlayer.Character.Humanoid.PlatformStand = true
+        FlyButton.Text = "Desativar Fly ✈️"
+        FlyButton.BackgroundColor3 = Color3.fromRGB(100, 50, 50)
+        SetNoClip(true)
+    else
+        LocalPlayer.Character.Humanoid.PlatformStand = false
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = 16
+        end
+        FlyButton.Text = "Ativar Fly ✈️"
+        FlyButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        SetNoClip(false)
+    end
+end
+
+local function ToggleNoFallButton()
+    toggleNoFall()
+    if Settings.NoFall then
+        NoFallButton.Text = "Desativar No Fall 🛡️"
+        NoFallButton.BackgroundColor3 = Color3.fromRGB(50, 100, 50)
+    else
+        NoFallButton.Text = "Ativar No Fall 🛡️"
+        NoFallButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    end
+end
+
+local function AdjustSpeed(change)
+    flySpeed = math.clamp(flySpeed + change, 10, 200)
+    SpeedLabel.Text = "Velocidade: " .. flySpeed
+end
+
+-- 🖱️ Conexões dos botões
+FlyButton.MouseButton1Click:Connect(ToggleFly)
+NoFallButton.MouseButton1Click:Connect(ToggleNoFallButton)
+SpeedUpButton.MouseButton1Click:Connect(function()
+    AdjustSpeed(10)
+end)
+SpeedDownButton.MouseButton1Click:Connect(function()
+    AdjustSpeed(-10)
+end)
+
+-- 🎛️ Teclas de atalho
+UIS.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.LeftShift then
+        Settings.Speed = 3
+    elseif input.KeyCode == Enum.KeyCode.F then
+        ToggleFly()
+    elseif input.KeyCode == Enum.KeyCode.G then
+        ToggleNoFallButton()
+    elseif input.KeyCode == Enum.KeyCode.V then
+        ToggleFly() -- Tecla V agora também ativa/desativa o fly
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.LeftShift then
+        Settings.Speed = 2
+    end
+end)
+
+-- 🏃 Loop do voo
+RunService.Heartbeat:Connect(function()
+    if Settings.Fly then
+        local direction = Vector3.new()
+        if UIS:IsKeyDown(Enum.KeyCode.W) then direction += Camera.CFrame.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.S) then direction -= Camera.CFrame.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.A) then direction -= Camera.CFrame.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.D) then direction += Camera.CFrame.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.Space) then direction += Vector3.new(0, 1, 0) end
+        if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then direction -= Vector3.new(0, 1, 0) end
+
+        LocalPlayer.Character.HumanoidRootPart.Velocity = direction * flySpeed * Settings.Speed
+        SetNoClip(true)
+    end
+end)
+
+-- 🔘 Toggle do Fluent UI para abrir/fechar o menu
+ShowFlyUI:OnChanged(function(state)
+    ScreenGui.Enabled = state
+end)
+
+toggleNoFall()
+
+-- ✅ Prints de status
+print("✈️ Fly + No Fall carregado com sucesso!")
+print("📋 Controles:")
+print("   F - Toggle Fly")
+print("   V - Toggle Fly") -- Adicionado o V
+print("   G - Toggle No Fall")
+print("   WASD - Movimento")
+print("   Space - Subir")
+print("   Ctrl - Descer")
+print("   Shift - Velocidade extra")
+
+MainTab:AddParagraph({
+    Title = "Nossos fly",
+    Content = "Recomendações: Voo 1: bom pra azaralhar sem ban (ninguém te vê)Voo 2: ótimo pra farmar — usa a tecla V pra ativar"
+})
 
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/Bernass79/KEY-SISTEM/refs/heads/main/README.md"))()
