@@ -3,7 +3,7 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 
 -- Cria a janela
 local Window = Fluent:CreateWindow({
-    Title = "🔥 GRAND-Menu Mini City(ACESSO ANTECIPADO) 🔥",
+    Title = "🔥 Arthur-Menu City(ACESSO ANTECIPADO) 🔥",
     SubTitle = "by Bernardo",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
@@ -27,9 +27,9 @@ end
 
 -- Aba Infos
 local InfosTab = Window:AddTab({ Title = "Infos", Icon = "info" })
-notificar("GRAND-Menu Injected 💸", "Obrigado por Adquirir nosso menu!", 36)
+notificar("Arthur-Menu Injected 💸", "Obrigado por Adquirir nosso menu!", 36)
 InfosTab:AddParagraph({
-    Title = "Grand Menu ℹ️",
+    Title = "Arthur-Menu ℹ️",
     Content = "+Menu Reconstruído "
 })
 InfosTab:AddButton({
@@ -579,354 +579,7 @@ AutoFarmsTab:AddButton({
 Window:SelectTab(1) -- Seleciona a aba Key System ao iniciar
 notificar("Menu Carregado", "GRAND-SHOP Menu Mini City carregado com sucesso!", 5)
 
--- Sistema de Voo com GUI
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
 
--- Variáveis do sistema (nomes únicos)
-local isFlying = false
-local flightSpeed = 15
-local minSpeed = 1
-local maxSpeed = 999
-local speedStep = 5
-local isAntiFallEnabled = false
-local isUIMinimized = false
-
--- Criação da GUI
-local ok, err = pcall(function()
-    local screenGuiFly = Instance.new("ScreenGui")
-    screenGuiFly.Name = "FlyGui"
-    screenGuiFly.Parent = LocalPlayer:WaitForChild("PlayerGui", 10)
-    screenGuiFly.ResetOnSpawn = false
-    screenGuiFly.Enabled = true -- Garante que a GUI esteja habilitada
-    screenGuiFly.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
-    local frameFly = Instance.new("Frame")
-    frameFly.Name = "FlyFrame"
-    frameFly.Size = UDim2.new(0, 220, 0, 120)
-    frameFly.Position = UDim2.new(0.5, -110, 0.1, 0) -- Centralizado no topo
-    frameFly.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    frameFly.BorderSizePixel = 0
-    frameFly.Active = true
-    frameFly.Draggable = true
-    frameFly.Parent = screenGuiFly
-    local cornerFly = Instance.new("UICorner")
-    cornerFly.CornerRadius = UDim.new(0, 12)
-    cornerFly.Parent = frameFly
-
-    local buttonFly = Instance.new("TextButton")
-    buttonFly.Name = "FlyButton"
-    buttonFly.Size = UDim2.new(0.9, 0, 0.3, 0)
-    buttonFly.Position = UDim2.new(0.05, 0, 0.1, 0)
-    buttonFly.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    buttonFly.TextColor3 = Color3.fromRGB(255, 255, 255)
-    buttonFly.Font = Enum.Font.GothamBold
-    buttonFly.TextSize = 18
-    buttonFly.Text = "Ativar Voo ✈️"
-    buttonFly.Parent = frameFly
-    local buttonCornerFly = Instance.new("UICorner")
-    buttonCornerFly.CornerRadius = UDim.new(0, 8)
-    buttonCornerFly.Parent = buttonFly
-
-    local speedLabel = Instance.new("TextLabel")
-    speedLabel.Name = "SpeedLabel"
-    speedLabel.Size = UDim2.new(0.9, 0, 0.2, 0)
-    speedLabel.Position = UDim2.new(0.05, 0, 0.45, 0)
-    speedLabel.BackgroundTransparency = 1
-    speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    speedLabel.Font = Enum.Font.Gotham
-    speedLabel.TextSize = 16
-    speedLabel.Text = "Velocidade: " .. flightSpeed
-    speedLabel.Parent = frameFly
-
-    local plusButtonFly = Instance.new("TextButton")
-    plusButtonFly.Name = "PlusButton"
-    plusButtonFly.Size = UDim2.new(0.2, 0, 0.2, 0)
-    plusButtonFly.Position = UDim2.new(0.75, 0, 0.45, 0)
-    plusButtonFly.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    plusButtonFly.TextColor3 = Color3.fromRGB(255, 255, 255)
-    plusButtonFly.Font = Enum.Font.GothamBold
-    plusButtonFly.TextSize = 18
-    plusButtonFly.Text = "+"
-    plusButtonFly.Parent = frameFly
-    local plusCornerFly = Instance.new("UICorner")
-    plusCornerFly.CornerRadius = UDim.new(0, 8)
-    plusCornerFly.Parent = plusButtonFly
-
-    local minusButtonFly = Instance.new("TextButton")
-    minusButtonFly.Name = "MinusButton"
-    minusButtonFly.Size = UDim2.new(0.2, 0, 0.2, 0)
-    minusButtonFly.Position = UDim2.new(0.05, 0, 0.45, 0)
-    minusButtonFly.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    minusButtonFly.TextColor3 = Color3.fromRGB(255, 255, 255)
-    minusButtonFly.Font = Enum.Font.GothamBold
-    minusButtonFly.TextSize = 18
-    minusButtonFly.Text = "-"
-    minusButtonFly.Parent = frameFly
-    local minusCornerFly = Instance.new("UICorner")
-    minusCornerFly.CornerRadius = UDim.new(0, 8)
-    minusCornerFly.Parent = minusButtonFly
-
-    local antiFallToggle = Instance.new("TextButton")
-    antiFallToggle.Name = "AntiFallToggle"
-    antiFallToggle.Size = UDim2.new(0.9, 0, 0.2, 0)
-    antiFallToggle.Position = UDim2.new(0.05, 0, 0.7, 0)
-    antiFallToggle.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    antiFallToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    antiFallToggle.Font = Enum.Font.GothamBold
-    antiFallToggle.TextSize = 18
-    antiFallToggle.Text = "Anti-Dano: OFF"
-    antiFallToggle.Parent = frameFly
-    local antiFallCorner = Instance.new("UICorner")
-    antiFallCorner.CornerRadius = UDim.new(0, 8)
-    antiFallCorner.Parent = antiFallToggle
-
-    local minimizeButtonFly = Instance.new("TextButton")
-    minimizeButtonFly.Name = "MinimizeButton"
-    minimizeButtonFly.Size = UDim2.new(0.1, 0, 0.1, 0)
-    minimizeButtonFly.Position = UDim2.new(0.95, 0, 0.05, 0)
-    minimizeButtonFly.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-    minimizeButtonFly.TextColor3 = Color3.fromRGB(255, 255, 255)
-    minimizeButtonFly.Font = Enum.Font.GothamBold
-    minimizeButtonFly.TextSize = 14
-    minimizeButtonFly.Text = "-"
-    minimizeButtonFly.Parent = frameFly
-    local minimizeCornerFly = Instance.new("UICorner")
-    minimizeCornerFly.CornerRadius = UDim.new(0, 4)
-    minimizeCornerFly.Parent = minimizeButtonFly
-
-    local closeButtonFly = Instance.new("TextButton")
-    closeButtonFly.Name = "CloseButton"
-    closeButtonFly.Size = UDim2.new(0.1, 0, 0.1, 0)
-    closeButtonFly.Position = UDim2.new(0.85, 0, 0.05, 0)
-    closeButtonFly.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
-    closeButtonFly.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeButtonFly.Font = Enum.Font.GothamBold
-    closeButtonFly.TextSize = 14
-    closeButtonFly.Text = "X"
-    closeButtonFly.Parent = frameFly
-    local closeCornerFly = Instance.new("UICorner")
-    closeCornerFly.CornerRadius = UDim.new(0, 4)
-    closeCornerFly.Parent = closeButtonFly
-
-    local controlFrame = Instance.new("Frame")
-    controlFrame.Name = "ControlFrame"
-    controlFrame.Size = UDim2.new(0, 100, 0, 50)
-    controlFrame.Position = UDim2.new(0.1, 0, 0.8, 0)
-    controlFrame.BackgroundTransparency = 1
-    controlFrame.Parent = screenGuiFly
-
-    local function createControlButton(name, position, text)
-        local btn = Instance.new("TextButton")
-        btn.Name = name
-        btn.Size = UDim2.new(0, 50, 0, 50)
-        btn.Position = position
-        btn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.Font = Enum.Font.GothamBold
-        btn.TextSize = 20
-        btn.Text = text
-        btn.Parent = controlFrame
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 8)
-        btnCorner.Parent = btn
-        return btn
-    end
-
-    local flyToggleButton = createControlButton("FlyToggleButton", UDim2.new(0, 0, 0, 0), "✈️")
-
-    -- Funções de voo
-    local function disableCollisions(character)
-        if not character then return end
-        for _, part in pairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
-        end
-    end
-
-    local function enableCollisions(character)
-        if not character then return end
-        for _, part in pairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = true
-            end
-        end
-    end
-
-    local function antiFallDamage()
-        while isAntiFallEnabled do
-            task.wait(0.1)
-            local character = LocalPlayer.Character
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                local humanoid = character:FindFirstChildOfClass("Humanoid")
-                local rootPart = character.HumanoidRootPart
-                if humanoid and rootPart and not isFlying and rootPart.Velocity.Y < -50 then
-                    rootPart.Velocity = Vector3.new(rootPart.Velocity.X, 0, rootPart.Velocity.Z)
-                end
-            end
-        end
-    end
-
-    local function startFlying()
-        local character = LocalPlayer.Character
-        if not character or not character:FindFirstChild("HumanoidRootPart") or not character:FindFirstChildOfClass("Humanoid") then
-            print("Personagem não encontrado!")
-            return false
-        end
-        local humanoidRootPart = character.HumanoidRootPart
-        local humanoid = character:FindFirstChildOfClass("Humanoid")
-
-        humanoid.PlatformStand = true
-        humanoidRootPart.Anchored = true
-        disableCollisions(character)
-        isFlying = true
-        buttonFly.Text = "Desativar Voo"
-        buttonFly.BackgroundColor3 = Color3.fromRGB(100, 50, 50)
-        flyToggleButton.Text = "✈️ OFF"
-
-        local connection
-        connection = RunService.Heartbeat:Connect(function(deltaTime)
-            if not isFlying or not character or not humanoidRootPart or not humanoid then
-                if connection then connection:Disconnect() end
-                return
-            end
-
-            local moveDirection = Vector3.new(0, 0, 0)
-            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + workspace.CurrentCamera.CFrame.LookVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - workspace.CurrentCamera.CFrame.LookVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - workspace.CurrentCamera.CFrame.RightVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + workspace.CurrentCamera.CFrame.RightVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0, 1, 0) end
-            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDirection = moveDirection - Vector3.new(0, 1, 0) end
-
-            if moveDirection.Magnitude > 0 then
-                moveDirection = moveDirection.Unit
-                local speed = flightSpeed * deltaTime * 10
-                humanoidRootPart.Anchored = false
-                humanoidRootPart.CFrame = humanoidRootPart.CFrame + moveDirection * speed
-                local lookVector = workspace.CurrentCamera.CFrame.LookVector
-                humanoidRootPart.CFrame = CFrame.new(humanoidRootPart.Position) * CFrame.Angles(0, math.atan2(lookVector.X, lookVector.Z), 0)
-                humanoidRootPart.Anchored = true
-            end
-        end)
-        print("Voo iniciado!")
-        return true
-    end
-
-    local function stopFlying()
-        local character = LocalPlayer.Character
-        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-        local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
-        if humanoid then humanoid.PlatformStand = false end
-        if character then enableCollisions(character) end
-        if humanoidRootPart then humanoidRootPart.Anchored = false end
-        isFlying = false
-        buttonFly.Text = "Ativar Voo ✈️"
-        buttonFly.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-        flyToggleButton.Text = "✈️ ON"
-        print("Voo parado!")
-    end
-
-    -- Conexões dos botões
-    buttonFly.MouseButton1Click:Connect(function()
-        if isFlying then
-            stopFlying()
-        else
-            startFlying()
-        end
-    end)
-
-    flyToggleButton.MouseButton1Click:Connect(function()
-        if isFlying then
-            stopFlying()
-        else
-            startFlying()
-        end
-    end)
-
-    antiFallToggle.MouseButton1Click:Connect(function()
-        isAntiFallEnabled = not isAntiFallEnabled
-        antiFallToggle.Text = "Anti-Dano: " .. (isAntiFallEnabled and "ON" or "OFF")
-        antiFallToggle.BackgroundColor3 = isAntiFallEnabled and Color3.fromRGB(100, 50, 50) or Color3.fromRGB(60, 60, 60)
-        if isAntiFallEnabled then
-            task.spawn(antiFallDamage)
-        end
-    end)
-
-    local function toggleUIMinimize()
-        if isUIMinimized then
-            frameFly.Size = UDim2.new(0, 220, 0, 120)
-            buttonFly.Size = UDim2.new(0.9, 0, 0.3, 0)
-            speedLabel.Size = UDim2.new(0.9, 0, 0.2, 0)
-            plusButtonFly.Size = UDim2.new(0.2, 0, 0.2, 0)
-            minusButtonFly.Size = UDim2.new(0.2, 0, 0.2, 0)
-            antiFallToggle.Size = UDim2.new(0.9, 0, 0.2, 0)
-            minimizeButtonFly.Text = "-"
-            isUIMinimized = false
-        else
-            frameFly.Size = UDim2.new(0, 150, 0, 80)
-            buttonFly.Size = UDim2.new(0.9, 0, 0.4, 0)
-            speedLabel.Size = UDim2.new(0.9, 0, 0.3, 0)
-            plusButtonFly.Size = UDim2.new(0.2, 0, 0.3, 0)
-            minusButtonFly.Size = UDim2.new(0.2, 0, 0.3, 0)
-            antiFallToggle.Size = UDim2.new(0.9, 0, 0.3, 0)
-            minimizeButtonFly.Text = "+"
-            isUIMinimized = true
-        end
-    end
-
-    minimizeButtonFly.MouseButton1Click:Connect(toggleUIMinimize)
-
-    closeButtonFly.MouseButton1Click:Connect(function()
-        screenGuiFly.Enabled = false
-        if isFlying then stopFlying() end
-    end)
-
-    local function adjustSpeed(delta)
-        flightSpeed = math.clamp(flightSpeed + delta, minSpeed, maxSpeed)
-        speedLabel.Text = "Velocidade: " .. flightSpeed
-    end
-
-    plusButtonFly.MouseButton1Click:Connect(function() adjustSpeed(speedStep) end)
-    minusButtonFly.MouseButton1Click:Connect(function() adjustSpeed(-speedStep) end)
-
-    -- Drag functionality
-    local dragging, dragInput, dragStart, startPos
-    frameFly.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = frameFly.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-
-    frameFly.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - dragStart
-            frameFly.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-
-    print("GUI 'FlyGui' criada e habilitada!")
-end)
-
-if not ok then
-    warn("Erro ao criar a GUI: " .. tostring(err))
-end
 
 
 
@@ -1654,6 +1307,142 @@ local Tabs = {
     Visual = Window:AddTab({ Title = "Visual 👁️‍", Icon = "eye" })
 }
 
+-- ESP de Players (Box e Skeleton)
+local ESP = {
+    Enabled = false,
+    Settings = {
+        TeamCheck = false,
+        AliveCheck = true,
+        BorderColor = Color3.fromRGB(255, 255, 255),
+        SkeletonColor = Color3.fromRGB(255, 0, 0),
+        BorderTransparency = 0.5,
+        SkeletonTransparency = 0.5,
+        BorderThickness = 3,
+        SkeletonThickness = 1
+    },
+    Borders = {},
+    Skeletons = {},
+    Connections = {}
+}
+
+local function CreateEsp(player)
+    if player == game.Players.LocalPlayer then return end
+    
+    local border = Drawing.new("Square")
+    border.Visible = false
+    border.Color = ESP.Settings.BorderColor
+    border.Thickness = ESP.Settings.BorderThickness
+    border.Transparency = ESP.Settings.BorderTransparency
+    border.Filled = false
+    ESP.Borders[player] = border
+
+    local skeleton = {
+        headToTorso = Drawing.new("Line"),
+        torsoToLeftArm = Drawing.new("Line"),
+        torsoToRightArm = Drawing.new("Line"),
+        torsoToLeftLeg = Drawing.new("Line"),
+        torsoToRightLeg = Drawing.new("Line")
+    }
+
+    for _, line in pairs(skeleton) do
+        line.Visible = false
+        line.Color = ESP.Settings.SkeletonColor
+        line.Thickness = ESP.Settings.SkeletonThickness
+        line.Transparency = ESP.Settings.SkeletonTransparency
+    end
+
+    ESP.Skeletons[player] = skeleton
+end
+
+local function UpdateEsp()
+    for player, border in pairs(ESP.Borders) do
+        local skeleton = ESP.Skeletons[player]
+        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") or not player.Character:FindFirstChildOfClass("Humanoid") then
+            border.Visible = false
+            for _, line in pairs(skeleton) do line.Visible = false end
+            continue
+        end
+
+        if ESP.Settings.AliveCheck and player.Character:FindFirstChildOfClass("Humanoid").Health <= 0 then
+            border.Visible = false
+            for _, line in pairs(skeleton) do line.Visible = false end
+            continue
+        end
+
+        local rootPart = player.Character.HumanoidRootPart
+        local head = player.Character:FindFirstChild("Head")
+        if not rootPart or not head then
+            border.Visible = false
+            for _, line in pairs(skeleton) do line.Visible = false end
+            continue
+        end
+
+        local headPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(head.Position)
+        local rootPos = workspace.CurrentCamera:WorldToViewportPoint(rootPart.Position - Vector3.new(0, 3, 0))
+
+        if onScreen then
+            local boxSize = Vector2.new((headPos.Y - rootPos.Y) * 1.5, (headPos.Y - rootPos.Y) * 1.5)
+            border.Size = Vector2.new(boxSize.X + 4, boxSize.Y + 4)
+            border.Position = Vector2.new(headPos.X - (boxSize.X + 4) / 2, headPos.Y - (boxSize.Y + 4) / 1.5)
+            border.Visible = ESP.Enabled
+
+            local torsoPos = workspace.CurrentCamera:WorldToViewportPoint(player.Character:FindFirstChild("UpperTorso") and player.Character.UpperTorso.Position or rootPart.Position)
+            local leftArmPos = workspace.CurrentCamera:WorldToViewportPoint(player.Character:FindFirstChild("LeftHand") and player.Character.LeftHand.Position or (rootPart.Position - Vector3.new(1, 0, 0)))
+            local rightArmPos = workspace.CurrentCamera:WorldToViewportPoint(player.Character:FindFirstChild("RightHand") and player.Character.RightHand.Position or (rootPart.Position + Vector3.new(1, 0, 0)))
+            local leftLegPos = workspace.CurrentCamera:WorldToViewportPoint(player.Character:FindFirstChild("LeftFoot") and player.Character.LeftFoot.Position or (rootPart.Position - Vector3.new(0.5, 2, 0)))
+            local rightLegPos = workspace.CurrentCamera:WorldToViewportPoint(player.Character:FindFirstChild("RightFoot") and player.Character.RightFoot.Position or (rootPart.Position + Vector3.new(0.5, 2, 0)))
+
+            skeleton.headToTorso.From = Vector2.new(headPos.X, headPos.Y)
+            skeleton.headToTorso.To = Vector2.new(torsoPos.X, torsoPos.Y)
+            skeleton.torsoToLeftArm.From = Vector2.new(torsoPos.X, torsoPos.Y)
+            skeleton.torsoToLeftArm.To = Vector2.new(leftArmPos.X, leftArmPos.Y)
+            skeleton.torsoToRightArm.From = Vector2.new(torsoPos.X, torsoPos.Y)
+            skeleton.torsoToRightArm.To = Vector2.new(rightArmPos.X, rightArmPos.Y)
+            skeleton.torsoToLeftLeg.From = Vector2.new(torsoPos.X, torsoPos.Y)
+            skeleton.torsoToLeftLeg.To = Vector2.new(leftLegPos.X, leftLegPos.Y)
+            skeleton.torsoToRightLeg.From = Vector2.new(torsoPos.X, torsoPos.Y)
+            skeleton.torsoToRightLeg.To = Vector2.new(rightLegPos.X, rightLegPos.Y)
+
+            for _, line in pairs(skeleton) do line.Visible = ESP.Enabled end
+        else
+            border.Visible = false
+            for _, line in pairs(skeleton) do line.Visible = false end
+        end
+    end
+end
+
+-- Inicializar ESP para jogadores existentes
+for _, player in pairs(game.Players:GetPlayers()) do CreateEsp(player) end
+
+-- Conexões do ESP
+ESP.Connections.PlayerAdded = game.Players.PlayerAdded:Connect(CreateEsp)
+ESP.Connections.PlayerRemoving = game.Players.PlayerRemoving:Connect(function(player)
+    if ESP.Borders[player] then
+        ESP.Borders[player]:Remove()
+        ESP.Borders[player] = nil
+    end
+    if ESP.Skeletons[player] then
+        for _, line in pairs(ESP.Skeletons[player]) do line:Remove() end
+        ESP.Skeletons[player] = nil
+    end
+end)
+ESP.Connections.RenderStepped = game:GetService("RunService").RenderStepped:Connect(UpdateEsp)
+
+-- Toggle ESP Players
+Tabs.Visual:AddToggle("PlayerESP", {
+    Title = "ESP Players 🔍",
+    Description = "Mostra caixas e esqueletos dos jogadores",
+    Default = false
+}):OnChanged(function(Value)
+    ESP.Enabled = Value
+    Fluent:Notify({
+        Title = "ESP Players",
+        Content = ESP.Enabled and "ESP Players ativado!" or "ESP Players desativado!",
+        Duration = 3
+    })
+end)
+
+
 -- Variáveis de controle
 local espData = {}
 local rgbCycleEnabled = false
@@ -2089,6 +1878,8 @@ Tabs.Visual:AddToggle("InventoryESP", {
     end
 end)
 
+
+
 -- Toggle ESP Jogadores
 Tabs.Visual:AddToggle("ESPPlayers", {
     Title = "ESP Jogadores 👁️",
@@ -2201,12 +1992,7 @@ Tabs.Visual:AddButton({
     end
 })
 
--- Notificação de carregamento
-Fluent:Notify({
-    Title = "Visual Carregado",
-    Content = "Seção visual com ESPs corrigidos carregada com sucesso!",
-    Duration = 3
-})
+
 
 
 
@@ -2849,5 +2635,387 @@ print("Aba 'Teleports 🌀' para jogadores criada com sucesso!")
 
 -- Exibe a janela
 Window:SelectTab(1)
+
+-- Variáveis do sistema de voo
+local flying = false
+local flySpeed = 15
+local minSpeed = 1
+local maxSpeed = 999
+local speedStep = 5
+local antiFallEnabled = false
+local flyConnection = nil
+local uiMinimized = false
+
+-- Criando a interface de voo personalizada
+local screenGuiFly = Instance.new("ScreenGui")
+screenGuiFly.Name = "FlyGui"
+screenGuiFly.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+screenGuiFly.ResetOnSpawn = false
+screenGuiFly.Enabled = false
+
+local frameFly = Instance.new("Frame")
+frameFly.Name = "FlyFrame"
+frameFly.Size = UDim2.new(0, 220, 0, 140)
+frameFly.Position = UDim2.new(0.5, -110, 0.1, 0)
+frameFly.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frameFly.BorderSizePixel = 0
+frameFly.Active = true
+frameFly.Draggable = true
+frameFly.Parent = screenGuiFly
+local cornerFly = Instance.new("UICorner")
+cornerFly.CornerRadius = UDim.new(0, 12)
+cornerFly.Parent = frameFly
+
+-- Título da interface
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Name = "TitleLabel"
+titleLabel.Size = UDim2.new(0.7, 0, 0.15, 0)
+titleLabel.Position = UDim2.new(0.05, 0, 0.05, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextSize = 16
+titleLabel.Text = "Sistema de Voo ✈️"
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = frameFly
+
+local buttonFly = Instance.new("TextButton")
+buttonFly.Name = "FlyButton"
+buttonFly.Size = UDim2.new(0.9, 0, 0.2, 0)
+buttonFly.Position = UDim2.new(0.05, 0, 0.22, 0)
+buttonFly.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+buttonFly.TextColor3 = Color3.fromRGB(255, 255, 255)
+buttonFly.Font = Enum.Font.GothamBold
+buttonFly.TextSize = 16
+buttonFly.Text = "Ativar Voo ✈️"
+buttonFly.Parent = frameFly
+local buttonCornerFly = Instance.new("UICorner")
+buttonCornerFly.CornerRadius = UDim.new(0, 8)
+buttonCornerFly.Parent = buttonFly
+
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Name = "SpeedLabel"
+speedLabel.Size = UDim2.new(0.55, 0, 0.15, 0)
+speedLabel.Position = UDim2.new(0.05, 0, 0.45, 0)
+speedLabel.BackgroundTransparency = 1
+speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedLabel.Font = Enum.Font.Gotham
+speedLabel.TextSize = 14
+speedLabel.Text = "Velocidade: " .. flySpeed
+speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+speedLabel.Parent = frameFly
+
+local minusButtonFly = Instance.new("TextButton")
+minusButtonFly.Name = "MinusButton"
+minusButtonFly.Size = UDim2.new(0.15, 0, 0.15, 0)
+minusButtonFly.Position = UDim2.new(0.65, 0, 0.45, 0)
+minusButtonFly.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+minusButtonFly.TextColor3 = Color3.fromRGB(255, 255, 255)
+minusButtonFly.Font = Enum.Font.GothamBold
+minusButtonFly.TextSize = 16
+minusButtonFly.Text = "-"
+minusButtonFly.Parent = frameFly
+local minusCornerFly = Instance.new("UICorner")
+minusCornerFly.CornerRadius = UDim.new(0, 6)
+minusCornerFly.Parent = minusButtonFly
+
+local plusButtonFly = Instance.new("TextButton")
+plusButtonFly.Name = "PlusButton"
+plusButtonFly.Size = UDim2.new(0.15, 0, 0.15, 0)
+plusButtonFly.Position = UDim2.new(0.82, 0, 0.45, 0)
+plusButtonFly.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+plusButtonFly.TextColor3 = Color3.fromRGB(255, 255, 255)
+plusButtonFly.Font = Enum.Font.GothamBold
+plusButtonFly.TextSize = 16
+plusButtonFly.Text = "+"
+plusButtonFly.Parent = frameFly
+local plusCornerFly = Instance.new("UICorner")
+plusCornerFly.CornerRadius = UDim.new(0, 6)
+plusCornerFly.Parent = plusButtonFly
+
+local antiFallToggle = Instance.new("TextButton")
+antiFallToggle.Name = "AntiFallToggle"
+antiFallToggle.Size = UDim2.new(0.9, 0, 0.15, 0)
+antiFallToggle.Position = UDim2.new(0.05, 0, 0.63, 0)
+antiFallToggle.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+antiFallToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+antiFallToggle.Font = Enum.Font.GothamBold
+antiFallToggle.TextSize = 14
+antiFallToggle.Text = "Anti-Dano: OFF"
+antiFallToggle.Parent = frameFly
+local antiFallCorner = Instance.new("UICorner")
+antiFallCorner.CornerRadius = UDim.new(0, 6)
+antiFallCorner.Parent = antiFallToggle
+
+local controlsLabel = Instance.new("TextLabel")
+controlsLabel.Name = "ControlsLabel"
+controlsLabel.Size = UDim2.new(0.9, 0, 0.12, 0)
+controlsLabel.Position = UDim2.new(0.05, 0, 0.81, 0)
+controlsLabel.BackgroundTransparency = 1
+controlsLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+controlsLabel.Font = Enum.Font.Gotham
+controlsLabel.TextSize = 11
+controlsLabel.Text = "WASD + Space/Shift | G = Toggle"
+controlsLabel.TextXAlignment = Enum.TextXAlignment.Center
+controlsLabel.Parent = frameFly
+
+local minimizeButtonFly = Instance.new("TextButton")
+minimizeButtonFly.Name = "MinimizeButton"
+minimizeButtonFly.Size = UDim2.new(0.12, 0, 0.12, 0)
+minimizeButtonFly.Position = UDim2.new(0.78, 0, 0.05, 0)
+minimizeButtonFly.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+minimizeButtonFly.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeButtonFly.Font = Enum.Font.GothamBold
+minimizeButtonFly.TextSize = 12
+minimizeButtonFly.Text = "−"
+minimizeButtonFly.Parent = frameFly
+local minimizeCornerFly = Instance.new("UICorner")
+minimizeCornerFly.CornerRadius = UDim.new(0, 4)
+minimizeCornerFly.Parent = minimizeButtonFly
+
+local closeButtonFly = Instance.new("TextButton")
+closeButtonFly.Name = "CloseButton"
+closeButtonFly.Size = UDim2.new(0.12, 0, 0.12, 0)
+closeButtonFly.Position = UDim2.new(0.91, 0, 0.05, 0)
+closeButtonFly.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+closeButtonFly.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButtonFly.Font = Enum.Font.GothamBold
+closeButtonFly.TextSize = 12
+closeButtonFly.Text = "✕"
+closeButtonFly.Parent = frameFly
+local closeCornerFly = Instance.new("UICorner")
+closeCornerFly.CornerRadius = UDim.new(0, 4)
+closeCornerFly.Parent = closeButtonFly
+
+-- Funções auxiliares
+local function disableCollisions(character)
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then 
+            part.CanCollide = false 
+        end
+    end
+end
+
+local function enableCollisions(character)
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then 
+            part.CanCollide = true 
+        end
+    end
+end
+
+local function antiFallDamage()
+    while antiFallEnabled do
+        task.wait(0.1)
+        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local humanoid = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            local rootPart = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if humanoid and rootPart and not flying and rootPart.Velocity.Y < -50 then
+                rootPart.Velocity = Vector3.new(rootPart.Velocity.X, 0, rootPart.Velocity.Z)
+            end
+        end
+    end
+end
+
+local function startFlying()
+    local character = game.Players.LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") or not character:FindFirstChildOfClass("Humanoid") then 
+        return false 
+    end
+    
+    local humanoidRootPart = character.HumanoidRootPart
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+    -- Configurando o voo
+    humanoid.PlatformStand = true
+    humanoidRootPart.Anchored = true
+    disableCollisions(character)
+    flying = true
+    
+    -- Atualizando interface
+    buttonFly.Text = "Desativar Voo ✈️"
+    buttonFly.BackgroundColor3 = Color3.fromRGB(100, 50, 50)
+
+    -- Loop de movimento
+    flyConnection = game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
+        if not flying or not character or not humanoidRootPart or not humanoid then
+            if flyConnection then 
+                flyConnection:Disconnect() 
+                flyConnection = nil
+            end
+            return
+        end
+
+        local moveDirection = Vector3.new(0, 0, 0)
+        local UserInputService = game:GetService("UserInputService")
+        
+        -- Controles de movimento
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then 
+            moveDirection = moveDirection + workspace.CurrentCamera.CFrame.LookVector 
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then 
+            moveDirection = moveDirection - workspace.CurrentCamera.CFrame.LookVector 
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then 
+            moveDirection = moveDirection - workspace.CurrentCamera.CFrame.RightVector 
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then 
+            moveDirection = moveDirection + workspace.CurrentCamera.CFrame.RightVector 
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then 
+            moveDirection = moveDirection + Vector3.new(0, 1, 0) 
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then 
+            moveDirection = moveDirection - Vector3.new(0, 1, 0) 
+        end
+
+        -- Aplicando movimento
+        if moveDirection.Magnitude > 0 then
+            moveDirection = moveDirection.Unit
+            local speed = flySpeed * deltaTime * 10
+            humanoidRootPart.Anchored = false
+            humanoidRootPart.CFrame = humanoidRootPart.CFrame + moveDirection * speed
+            
+            -- Rotação do personagem
+            if moveDirection.X ~= 0 or moveDirection.Z ~= 0 then
+                local lookVector = workspace.CurrentCamera.CFrame.LookVector
+                humanoidRootPart.CFrame = CFrame.new(humanoidRootPart.Position) * CFrame.Angles(0, math.atan2(lookVector.X, lookVector.Z), 0)
+            end
+            
+            humanoidRootPart.Anchored = true
+        end
+    end)
+    
+    return true
+end
+
+local function stopFlying()
+    local character = game.Players.LocalPlayer.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
+    
+    -- Parando o voo
+    if flyConnection then 
+        flyConnection:Disconnect() 
+        flyConnection = nil
+    end
+    
+    if humanoid then 
+        humanoid.PlatformStand = false 
+    end
+    if character then 
+        enableCollisions(character) 
+    end
+    if humanoidRootPart then 
+        humanoidRootPart.Anchored = false 
+    end
+    
+    flying = false
+    
+    -- Atualizando interface
+    buttonFly.Text = "Ativar Voo ✈️"
+    buttonFly.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+end
+
+local function adjustSpeed(delta)
+    flySpeed = math.clamp(flySpeed + delta, minSpeed, maxSpeed)
+    speedLabel.Text = "Velocidade: " .. flySpeed
+end
+
+local function toggleUIMinimize()
+    if uiMinimized then
+        frameFly.Size = UDim2.new(0, 220, 0, 140)
+        buttonFly.Visible = true
+        speedLabel.Visible = true
+        plusButtonFly.Visible = true
+        minusButtonFly.Visible = true
+        antiFallToggle.Visible = true
+        controlsLabel.Visible = true
+        minimizeButtonFly.Text = "−"
+        uiMinimized = false
+    else
+        frameFly.Size = UDim2.new(0, 220, 0, 30)
+        buttonFly.Visible = false
+        speedLabel.Visible = false
+        plusButtonFly.Visible = false
+        minusButtonFly.Visible = false
+        antiFallToggle.Visible = false
+        controlsLabel.Visible = false
+        minimizeButtonFly.Text = "+"
+        uiMinimized = true
+    end
+end
+
+-- Conectando eventos da interface
+buttonFly.MouseButton1Click:Connect(function()
+    if flying then 
+        stopFlying() 
+    else 
+        startFlying() 
+    end
+end)
+
+antiFallToggle.MouseButton1Click:Connect(function()
+    antiFallEnabled = not antiFallEnabled
+    antiFallToggle.Text = "Anti-Dano: " .. (antiFallEnabled and "ON" or "OFF")
+    antiFallToggle.BackgroundColor3 = antiFallEnabled and Color3.fromRGB(50, 100, 50) or Color3.fromRGB(60, 60, 60)
+    if antiFallEnabled then 
+        task.spawn(antiFallDamage) 
+    end
+end)
+
+plusButtonFly.MouseButton1Click:Connect(function() 
+    adjustSpeed(speedStep) 
+end)
+
+minusButtonFly.MouseButton1Click:Connect(function() 
+    adjustSpeed(-speedStep) 
+end)
+
+minimizeButtonFly.MouseButton1Click:Connect(toggleUIMinimize)
+
+closeButtonFly.MouseButton1Click:Connect(function()
+    screenGuiFly.Enabled = false
+    if flying then 
+        stopFlying() 
+    end
+end)
+
+
+
+local MainTab = Window:AddTab({ Title = "Voo", Icon = "plane" })
+
+-- Toggle para mostrar/esconder interface de voo
+local ShowFlyUI = MainTab:AddToggle("ShowFlyUI", {
+    Title = "Abrir Interface de Voo",
+    Description = "Abre/fecha a interface de controle do voo",
+    Default = false
+})
+
+ShowFlyUI:OnChanged(function(Value)
+    screenGuiFly.Enabled = Value
+end)
+
+-- Keybind para voo
+local FlyKeybind = MainTab:AddKeybind("FlyKeybind", {
+    Title = "Atalho do Voo",
+    Mode = "Toggle",
+    Default = "G",
+    Callback = function()
+        if flying then
+            stopFlying()
+        else
+            startFlying()
+        end
+    end
+})
+
+-- Limpeza ao sair
+game.Players.LocalPlayer.CharacterRemoving:Connect(function()
+    if flying then
+        stopFlying()
+    end
+end)
+
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/Bernass79/KEY-SISTEM/refs/heads/main/README.md"))()
